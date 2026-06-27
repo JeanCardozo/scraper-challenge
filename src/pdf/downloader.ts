@@ -94,7 +94,7 @@ function sanitizeFilename(name: string): string {
  * @param headerValue - Raw Content-Disposition header string
  * @returns Extracted filename or null if header is missing/unparseable
  */
-function extractFilenameFromHeader(headerValue: string | null | undefined): string | null {
+export function extractFilenameFromHeader(headerValue: string | null | undefined): string | null {
   if (!headerValue) return null;
 
   // Try filename* first (RFC 5987 encoded)
@@ -264,7 +264,7 @@ async function attemptDownload(job: DownloadJob, outDir: string): Promise<string
  * Check if an error represents a non-retryable HTTP 4xx (except 429).
  * Also matches axios' error-wrapping for HTTP status codes.
  */
-function isNonRetryable4xx(error: unknown): boolean {
+export function isNonRetryable4xx(error: unknown): boolean {
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosErr = error as { response?: { status?: number } };
     const status = axiosErr.response?.status;

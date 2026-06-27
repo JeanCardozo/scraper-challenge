@@ -108,7 +108,7 @@ const SECTIONS: SectionConfig[] = [
  * @param onclick - Raw onclick attribute string
  * @returns The extracted UUID, or null if not found
  */
-function extractParamUuid(onclick: string): string | null {
+export function extractParamUuid(onclick: string): string | null {
   // Match both single and double quoted variants of param_uuid
   const match = onclick.match(/param_uuid['"]\s*:\s*['"]([^'"]+)['"]/);
   return match?.[1] ?? null;

@@ -245,7 +245,7 @@ export class ScraperEngine {
    * Uses \b word boundaries to avoid false positives from
    * unrelated text containing "login" or "form" substrings.
    */
-  private isStaleSession(xml: string): boolean {
+  public isStaleSession(xml: string): boolean {
     const loginPatterns = [
       /\bj_username\b/i,
       /\bj_password\b/i,
