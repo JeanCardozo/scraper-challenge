@@ -1,0 +1,28 @@
+{
+  "name": "scraper-challenge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "JSF/PrimeFaces paginated data scraper with PDF download support",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "tsx src/cli/index.ts",
+    "preview": "tsx src/cli/index.ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "fast-xml-parser": "^4.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
