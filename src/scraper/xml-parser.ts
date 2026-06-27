@@ -26,7 +26,7 @@ export class JsfXmlParser {
       ignoreAttributes: false,
       attributeNamePrefix: '@_',
       isArray: (name) =>
-        name === 'update' || name === 'changes' || name === 'tr' || name === 'td',
+        name === 'update' || name === 'tr' || name === 'td',
       // ponytail: CDATA is parsed as #cdata-section by default
       // which is fine for our extraction pattern
       trimValues: true,
@@ -90,8 +90,13 @@ export class JsfXmlParser {
     const changes = partialResponse?.changes;
     if (!changes) return null;
 
+    // changes may be an array (isArray forces it) or a plain object.
+    // Normalize to a single changes block.
+    const changesBlock = Array.isArray(changes) ? changes[0] : changes;
+    if (!changesBlock) return null;
+
     // changes.update may be an object (single) or array
-    const updates = changes?.update;
+    const updates = changesBlock?.update;
     if (!updates) return null;
 
     return Array.isArray(updates) ? updates : [updates];
@@ -102,13 +107,11 @@ export class JsfXmlParser {
    * fast-xml-parser stores CDATA content under `#cdata-section`.
    */
   private getCdataContent(update: Record<string, unknown>): string | undefined {
-    // fast-xml-parser stores CDATA as `#cdata-section`
-    const cdata = update['#cdata-section'];
-    if (typeof cdata === 'string') return cdata;
-
-    // Fallback: check for text content in case the parser
-    // configuration handles CDATA differently
+    // fast-xml-parser v4 stores CDATA text under `#text`
     if (typeof update['#text'] === 'string') return update['#text'] as string;
+
+    // Some configurations store CDATA as `#cdata-section`
+    if (typeof update['#cdata-section'] === 'string') return update['#cdata-section'];
 
     return undefined;
   }

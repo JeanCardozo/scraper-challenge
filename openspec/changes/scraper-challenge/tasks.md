@@ -44,8 +44,8 @@ Chain strategy: feature-branch-chain
 
 ## Phase 4: PDF Downloader
 
-- [ ] 4.1 Create `src/pdf/queue.ts` (semaphore pool 3 workers, pending/downloading/success/failed status)
-- [ ] 4.2 Create `src/pdf/downloader.ts` (form POST, content-disposition filename, sanitize, retry 3×, skip 4xx non-429)
+- [x] 4.1 Create `src/pdf/queue.ts` (semaphore pool 3 workers, pending/downloading/success/failed status)
+- [x] 4.2 Create `src/pdf/downloader.ts` (form POST, content-disposition filename, sanitize, retry 3×, skip 4xx non-429)
 
 ## Phase 5: Data Export
 
@@ -54,19 +54,19 @@ Chain strategy: feature-branch-chain
 
 ## Phase 6: CLI
 
-- [ ] 6.1 Create `src/cli/index.ts` (npx tsx src/cli/index.ts `<section> <out-dir>` [--resume] [--concurrency N], phase orchestration)
+- [x] 6.1 Create `src/cli/index.ts` (npx tsx src/cli/index.ts `<section> <out-dir>` [--resume] [--concurrency N], phase orchestration)
 
 ## Phase 7: Tests
 
-- [ ] 7.1 Write ViewState extraction test (cheerio → hidden input value)
-- [ ] 7.2 Write ViewState from XML test (mock partial-response → CDATA content)
-- [ ] 7.3 Write CDATA row count test (known rows → assert ScrapedRecord length)
-- [ ] 7.4 Write filename sanitization test (`"N° 123/OEFA"` → `"No_123_OEFA"`)
-- [ ] 7.5 Write CSV quoting test (comma → quoted, double-quote → doubled)
-- [ ] 7.6 Write backoff jitter test (±50% range from 100ms base, ≥1ms)
-- [ ] 7.7 Write mock PrimeFaces HTTP server integration test (pagination offsets → JSF XML → records)
+- [x] 7.1 Write ViewState extraction test (cheerio → hidden input value)
+- [x] 7.2 Write ViewState from XML test (mock partial-response → CDATA content)
+- [x] 7.3 Write CDATA row count test (known rows → assert ScrapedRecord length)
+- [x] 7.4 Write filename sanitization test (`"N° 123/OEFA"` → `"No_123_OEFA"`)
+- [x] 7.5 Write CSV quoting test (comma → quoted, double-quote → doubled)
+- [x] 7.6 Write backoff jitter test (±50% range from 100ms base, ≥1ms)
+- [x] 7.7 Write mock PrimeFaces HTTP server integration test (pagination offsets → JSF XML → records)
 
 ## Phase 8: Documentation
 
-- [ ] 8.1 Create `.gitignore` (node_modules, dist, \*.jsonl, \*.csv, \*.pdf)
-- [ ] 8.2 Create `README.md` (install, usage, section list, --resume, examples, configuration)
+- [x] 8.1 Create `.gitignore` (node_modules, dist, \*.jsonl, \*.csv, \*.pdf)
+- [x] 8.2 Create `README.md` (install, usage, section list, --resume, examples, configuration)
