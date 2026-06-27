@@ -39,8 +39,8 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3: OEFA Adapter
 
-- [ ] 3.1 Create `src/oefa/types.ts` (TfaRecord, DfsaiRecord, IgaRecord — nullable string fields)
-- [ ] 3.2 Create `src/oefa/adapter.ts` (3 section configs, widget vars, field mappings, mojarra.jsfcljs PDF param extraction)
+- [x] 3.1 Create `src/oefa/types.ts` (TfaRecord, DfsaiRecord, IgaRecord — nullable string fields)
+- [x] 3.2 Create `src/oefa/adapter.ts` (3 section configs, widget vars, field mappings, mojarra.jsfcljs PDF param extraction)
 
 ## Phase 4: PDF Downloader
 
@@ -49,8 +49,8 @@ Chain strategy: feature-branch-chain
 
 ## Phase 5: Data Export
 
-- [ ] 5.1 Create `src/export/json.ts` (one JSON object per line, UTF-8, append mode)
-- [ ] 5.2 Create `src/export/csv.ts` (UTF-8 BOM, RFC 4180 quoting, field filter, append w/o duplicate header)
+- [x] 5.1 Create `src/export/json.ts` (one JSON object per line, UTF-8, append mode)
+- [x] 5.2 Create `src/export/csv.ts` (UTF-8 BOM, RFC 4180 quoting, field filter, append w/o duplicate header)
 
 ## Phase 6: CLI
 
