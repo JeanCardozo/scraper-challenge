@@ -2,12 +2,12 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { load } from 'cheerio';
 
 /**
- * Manages an HTTP session with a JSF server.
+ * Gestiona una sesión HTTP con un servidor JSF.
  *
- * Responsibilities:
- * - Establish JSESSIONID via initial GET request
- * - Extract and rotate javax.faces.ViewState
- * - Maintain a cookie jar via axios request/response interceptors
+ * Responsabilidades:
+ * - Establecer JSESSIONID mediante GET inicial
+ * - Extraer y rotar javax.faces.ViewState
+ * - Mantener cookies vía interceptores de axios
  */
 export class HttpSession {
   private client: AxiosInstance;
@@ -16,7 +16,7 @@ export class HttpSession {
   private cookieString = '';
 
   /**
-   * @param baseUrl - Target server base URL (no trailing slash)
+   * @param baseUrl - URL base del servidor destino (sin barra final)
    */
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl.replace(/\/+$/, '');
@@ -31,7 +31,7 @@ export class HttpSession {
       },
     });
 
-    // Response interceptor: capture Set-Cookie headers
+    // Interceptor de respuesta: captura Set-Cookie
     this.client.interceptors.response.use((response) => {
       const setCookie = response.headers['set-cookie'];
       if (setCookie) {
@@ -40,7 +40,7 @@ export class HttpSession {
       return response;
     });
 
-    // Request interceptor: attach stored cookies
+    // Interceptor de petición: adjunta cookies almacenadas
     this.client.interceptors.request.use((config) => {
       if (this.cookieString) {
         config.headers.set('Cookie', this.cookieString, false);
@@ -50,10 +50,10 @@ export class HttpSession {
   }
 
   /**
-   * Initialize the session: GET the target URL to establish
-   * JSESSIONID and extract the initial ViewState from the HTML.
+   * Inicializa la sesión: GET a la URL destino para establecer
+   * JSESSIONID y extraer el ViewState inicial del HTML.
    *
-   * @param path - Optional path to GET (defaults to baseUrl)
+   * @param path - Ruta opcional para el GET (por defecto baseUrl)
    */
   async init(path?: string): Promise<void> {
     const url = path ? `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}` : this.baseUrl;
@@ -62,12 +62,12 @@ export class HttpSession {
   }
 
   /**
-   * Perform an AJAX POST to a JSF page.
-   * Automatically includes the current ViewState in the payload.
+   * Realiza un POST AJAX a una página JSF.
+   * Incluye automáticamente el ViewState actual en el payload.
    *
-   * @param path - URL path (e.g. "/consultaTfa.xhtml")
-   * @param data - Additional form data (dt_first, dt_rows, etc.)
-   * @returns Axios response with the server reply
+   * @param path - Ruta (ej. "/consultaTfa.xhtml")
+   * @param data - Datos adicionales del formulario (dt_first, dt_rows, etc.)
+   * @returns Respuesta de axios con la respuesta del servidor
    */
   async post(path: string, data: Record<string, string>): Promise<AxiosResponse> {
     const url = `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
@@ -79,12 +79,10 @@ export class HttpSession {
       ...data,
     };
 
-    // Include current ViewState if available
     if (this.viewState) {
       payload['javax.faces.ViewState'] = this.viewState;
     }
 
-    // Remove internal meta-params
     delete payload._formId;
 
     // ponytail: URLSearchParams for application/x-www-form-urlencoded
@@ -101,24 +99,24 @@ export class HttpSession {
     return response;
   }
 
-  /** Get the current javax.faces.ViewState value */
+  /** Devuelve el javax.faces.ViewState actual */
   getViewState(): string | null {
     return this.viewState;
   }
 
-  /** Update the ViewState (called after parsing XML response) */
+  /** Actualiza el ViewState (llamado tras parsear respuesta XML) */
   updateViewState(newVs: string): void {
     this.viewState = newVs;
   }
 
-  /** Get the current base URL */
+  /** Devuelve la URL base actual */
   getBaseUrl(): string {
     return this.baseUrl;
   }
 
   /**
-   * Extract ViewState from a full HTML page.
-   * Looks for `<input type="hidden" name="javax.faces.ViewState" value="..." />`.
+   * Extrae el ViewState de una página HTML completa.
+   * Busca `<input type="hidden" name="javax.faces.ViewState" value="..." />`.
    */
   static extractViewStateFromHtml(html: string): string | null {
     const $ = load(html);
@@ -127,8 +125,8 @@ export class HttpSession {
   }
 
   /**
-   * Merge Set-Cookie response headers into the cookie jar.
-   * Preserves cookie names (last value wins for same name).
+   * Fusiona cabeceras Set-Cookie en el jar de cookies.
+   * Conserva nombres de cookie (el último valor gana para el mismo nombre).
    */
   private mergeCookies(setCookie: string | string[]): void {
     const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
@@ -140,12 +138,11 @@ export class HttpSession {
     for (const raw of cookies) {
       const nameValue = raw.split(';')[0];
       if (!nameValue) continue;
-      // Use indexOf to handle cookie values that contain '=' (e.g. JWT, base64)
+      // indexOf porque el valor puede contener '=' (JWT, base64)
       const eqIdx = nameValue.indexOf('=');
       if (eqIdx === -1) continue;
       const name = nameValue.slice(0, eqIdx).trim();
 
-      // Remove old value for this cookie name, append new one
       const filtered = existing.filter((e) => {
         const idx = e.indexOf('=');
         return idx === -1 || e.slice(0, idx).trim() !== name;

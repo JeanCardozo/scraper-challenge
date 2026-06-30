@@ -3,9 +3,9 @@ import { load, Cheerio } from 'cheerio';
 import type { AnyNode } from 'domhandler';
 
 /**
- * Parses JSF partial-response XML documents.
+ * Parsea documentos XML de respuesta parcial JSF.
  *
- * JSF AJAX responses use a specific XML format:
+ * Las respuestas AJAX de JSF usan un formato XML específico:
  * ```xml
  * <partial-response>
  *   <changes>
@@ -15,8 +15,8 @@ import type { AnyNode } from 'domhandler';
  * </partial-response>
  * ```
  *
- * This parser extracts CDATA-wrapped HTML from `<update id="...">` elements
- * and cheerio-loads the HTML for row-level parsing by adapters.
+ * Este parser extrae HTML envuelto en CDATA de elementos `<update id="...">`
+ * y carga el HTML con cheerio para que los adapters parseen las filas.
  */
 export class JsfXmlParser {
   private parser: XMLParser;
@@ -26,7 +26,7 @@ export class JsfXmlParser {
       ignoreAttributes: false,
       attributeNamePrefix: '@_',
       isArray: (name) =>
-        name === 'update' || name === 'changes' || name === 'tr' || name === 'td',
+        name === 'update' || name === 'tr' || name === 'td',
       // ponytail: CDATA is parsed as #cdata-section by default
       // which is fine for our extraction pattern
       trimValues: true,
@@ -34,11 +34,11 @@ export class JsfXmlParser {
   }
 
   /**
-   * Parse a JSF partial-response XML string and extract HTML table rows
-   * from all `<update>` elements.
+   * Parsea un XML de respuesta parcial JSF y extrae filas de tabla HTML
+   * de todos los elementos `<update>`.
    *
-   * @param xml - Raw partial-response XML string
-   * @returns Cheerio collection of `<tr>` elements, or null if none found
+   * @param xml - XML crudo de respuesta parcial
+   * @returns Colección Cheerio de `<tr>`, o null si no se encuentran
    */
   parseRows(xml: string): Cheerio<AnyNode> | null {
     const updates = this.getUpdates(xml);
@@ -57,18 +57,18 @@ export class JsfXmlParser {
   }
 
   /**
-   * Extract the ViewState value from a partial-response XML.
-   * Looks for `<update id="javax.faces.ViewState"><![CDATA[...]]></update>`.
+   * Extrae el ViewState de un XML de respuesta parcial.
+   * Busca `<update id="javax.faces.ViewState"><![CDATA[...]]></update>`.
    *
-   * @param xml - Raw partial-response XML string
-   * @returns ViewState string or null if not found
+   * @param xml - XML crudo de respuesta parcial
+   * @returns String del ViewState o null si no se encuentra
    */
   extractViewState(xml: string): string | null {
     const updates = this.getUpdates(xml);
     if (!updates) return null;
 
     for (const update of updates) {
-      // fast-xml-parser: `@_id` when attributeNamePrefix is '@_'
+      // fast-xml-parser: `@_id` cuando attributeNamePrefix es '@_'
       if (update['@_id'] === 'javax.faces.ViewState') {
         return this.getCdataContent(update) || null;
       }
@@ -78,37 +78,36 @@ export class JsfXmlParser {
   }
 
   /**
-   * Parse the XML and return update elements array.
+   * Parsea el XML y devuelve un array de elementos update.
    */
   private getUpdates(xml: string): Record<string, unknown>[] | null {
     const parsed = this.parser.parse(xml);
 
-    // Navigate: partial-response > changes > update[]
     const partialResponse = parsed?.['partial-response'];
     if (!partialResponse) return null;
 
     const changes = partialResponse?.changes;
     if (!changes) return null;
 
-    // changes.update may be an object (single) or array
-    const updates = changes?.update;
+    const changesBlock = Array.isArray(changes) ? changes[0] : changes;
+    if (!changesBlock) return null;
+
+    const updates = changesBlock?.update;
     if (!updates) return null;
 
     return Array.isArray(updates) ? updates : [updates];
   }
 
   /**
-   * Extract CDATA text content from a parsed update element.
-   * fast-xml-parser stores CDATA content under `#cdata-section`.
+   * Extrae el texto CDATA de un elemento update parseado.
+   * fast-xml-parser guarda el contenido CDATA bajo `#cdata-section`.
    */
   private getCdataContent(update: Record<string, unknown>): string | undefined {
-    // fast-xml-parser stores CDATA as `#cdata-section`
-    const cdata = update['#cdata-section'];
-    if (typeof cdata === 'string') return cdata;
-
-    // Fallback: check for text content in case the parser
-    // configuration handles CDATA differently
+    // fast-xml-parser v4 stores CDATA text under `#text`
     if (typeof update['#text'] === 'string') return update['#text'] as string;
+
+    // Some configurations store CDATA as `#cdata-section`
+    if (typeof update['#cdata-section'] === 'string') return update['#cdata-section'];
 
     return undefined;
   }
