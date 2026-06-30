@@ -1,9 +1,7 @@
 /**
- * @file SiteAdapter contract and types for the JSF scraping engine.
- *
- * The adapter interface isolates site-specific logic (URLs, form IDs,
- * field mappings, PDF param extraction) from the generic pagination
- * engine. Implement this to add support for a new JSF/PrimeFaces site.
+ * @file Contrato SiteAdapter para el motor de scraping JSF.
+ * Aísla la lógica específica del sitio (URLs, formularios, mapeo
+ * de columnas, parámetros PDF) del motor de paginación genérico.
  */
 
 import type { Cheerio } from 'cheerio';
@@ -11,39 +9,37 @@ import type { Cheerio } from 'cheerio';
 import type { SectionConfig, ScrapedRecord, DownloadJob } from '../types.js';
 
 /**
- * Site-specific adapter contract for the JSF scraping engine.
- *
- * Implementations configure URLs, form parameters, field mappings,
- * and row-parsing logic for a particular PrimeFaces site.
+ * Contrato del adapter específico del sitio para el motor JSF.
+ * Las implementaciones configuran URLs, parámetros de formulario,
+ * mapeo de columnas y lógica de parseo de filas.
  */
 export interface SiteAdapter {
-  /** Human-readable site name (e.g. "OEFA") */
+  /** Nombre legible del sitio (ej. "OEFA") */
   name: string;
-  /** Base URL (protocol + host, no trailing slash) */
+  /** URL base (protocolo + host, sin barra final) */
   baseUrl: string;
-  /** Default PrimeFaces form client ID (e.g. "listarDetalleInfraccionRAAForm") */
+  /** ID del formulario JSF por defecto */
   formId: string;
-  /** Default DataTable widget var (e.g. "listarDetalleInfraccionRAAForm:dt") */
+  /** Nombre del widget DataTable por defecto */
   widgetVar: string;
-  /** Available sections (each gets its own scrape run) */
+  /** Secciones disponibles (cada una ejecuta su propio scrape) */
   sections: SectionConfig[];
 
   /**
-   * Parse a PrimeFaces DataTable `<tr>` element into a typed record.
+   * Parsea un elemento `<tr>` del DataTable PrimeFaces a un registro.
    *
-   * @param $tr - Cheerio-wrapped table row from the parsed HTML
-   * @returns A scraped record, or null if the row should be skipped
+   * @param $tr - Fila de tabla envuelta en Cheerio
+   * @returns Registro extraído, o null si debe omitirse
    */
   parseRow($tr: Cheerio<unknown>): ScrapedRecord | null;
 
   /**
-   * Build a download job from a scraped record.
+   * Construye un trabajo de descarga desde un registro extraído.
+   * Extrae el `param_uuid` y la URL de acción del enlace de descarga
+   * con formato mojarra.jsfcljs.
    *
-   * Extracts the `param_uuid` and form action URL from the record's
-   * mojarra.jsfcljs-style download link.
-   *
-   * @param record - Previously scraped metadata record
-   * @returns DownloadJob if a PDF link was found, null otherwise
+   * @param record - Registro de metadatos previamente extraído
+   * @returns DownloadJob si se encontró un enlace PDF, null si no
    */
   extractDownloadParams(record: ScrapedRecord): DownloadJob | null;
 }
