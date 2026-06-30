@@ -1,9 +1,9 @@
 /**
- * Unit tests for PDF downloader helpers — isNonRetryable4xx and
- * extractFilenameFromHeader.
+ * Tests unitarios de helpers del descargador PDF — isNonRetryable4xx
+ * y extractFilenameFromHeader.
  *
- * These functions were exported from src/pdf/downloader.ts for
- * direct testability without network calls.
+ * Estas funciones se exportaron desde src/pdf/downloader.ts para
+ * testearlas directamente sin llamadas de red.
  */
 
 import { describe, it, expect } from 'vitest';

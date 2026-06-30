@@ -1,7 +1,6 @@
 /**
- * Unit tests for JSON Lines export — writeJsonLines().
- *
- * Covers: record count, empty array, field filtering, and append mode.
+ * Tests unitarios de exportación JSON Lines — writeJsonLines().
+ * Cubre: conteo de registros, array vacío, filtrado de campos y modo append.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -25,18 +24,16 @@ describe('JSON Lines export', () => {
     const lines = content.trim().split('\n');
     expect(lines).toHaveLength(3);
 
-    // Each line should be valid JSON
+    // Cada línea debe ser JSON válido
     for (const line of lines) {
       expect(() => JSON.parse(line)).not.toThrow();
     }
 
-    // Verify content of each line
     const parsed = lines.map((l) => JSON.parse(l));
     expect(parsed[0]!.nro).toBe('1');
     expect(parsed[1]!.nro).toBe('2');
     expect(parsed[2]!.nro).toBe('3');
 
-    // Cleanup
     unlinkSync(filePath);
     try { unlinkSync(tmpDir); } catch { /* ignore */ }
   });
@@ -50,7 +47,6 @@ describe('JSON Lines export', () => {
     const content = readFileSync(filePath, 'utf-8');
     expect(content).toBe('');
 
-    // Cleanup
     unlinkSync(filePath);
     try { unlinkSync(tmpDir); } catch { /* ignore */ }
   });
@@ -71,7 +67,6 @@ describe('JSON Lines export', () => {
     expect(parsed).not.toHaveProperty('administrado');
     expect(parsed).not.toHaveProperty('sector');
 
-    // Cleanup
     unlinkSync(filePath);
     try { unlinkSync(tmpDir); } catch { /* ignore */ }
   });
@@ -80,12 +75,12 @@ describe('JSON Lines export', () => {
     const tmpDir = mkdtempSync(join(tmpdir(), 'json-test-'));
     const filePath = join(tmpDir, 'append.jsonl');
 
-    // Write first batch
+    // Escribir primer lote
     await writeJsonLines([
       { _section: 'tfa', _uuid: null, nro: '1' },
     ], filePath);
 
-    // Append second batch
+    // Añadir segundo lote
     await writeJsonLines([
       { _section: 'tfa', _uuid: null, nro: '2' },
     ], filePath, { append: true });
@@ -94,13 +89,12 @@ describe('JSON Lines export', () => {
     const lines = content.trim().split('\n');
     expect(lines).toHaveLength(2);
 
-    // Both lines should be valid JSON
+    // Ambas líneas deben ser JSON válido
     const first = JSON.parse(lines[0]!);
     const second = JSON.parse(lines[1]!);
     expect(first.nro).toBe('1');
     expect(second.nro).toBe('2');
 
-    // Cleanup
     unlinkSync(filePath);
     try { unlinkSync(tmpDir); } catch { /* ignore */ }
   });

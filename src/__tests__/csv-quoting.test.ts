@@ -1,10 +1,8 @@
 /**
- * 7.5 CSV quoting test.
- *
- * Verifies RFC 4180 quoting rules:
- * - Fields containing commas are quoted
- * - Double quotes within fields are escaped by doubling
- * - Fields without special characters are not quoted
+ * Test de quoting CSV según RFC 4180.
+ * Verifica que los campos con comas se entrecomillen, las comillas
+ * dobles se escapen duplicando, y los campos sin caracteres especiales
+ * no se entrecomillen.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -24,13 +22,12 @@ describe('CSV quoting', () => {
     );
 
     const content = readFileSync(filePath, 'utf-8');
-    // Header: _section,_uuid,name,age
-    // Data row should have name quoted
+    // Cabecera: _section,_uuid,name,age
+    // La fila de datos debe tener el nombre entrecomillado
     const lines = content.split('\n');
     expect(lines[1]).toContain('"Smith, John & Sons"');
     expect(lines[1]).toContain(',30');
 
-    // Cleanup
     unlinkSync(filePath);
     try { unlinkSync(tmpDir); } catch { /* ignore */ }
   });
@@ -47,7 +44,6 @@ describe('CSV quoting', () => {
     const content = readFileSync(filePath, 'utf-8');
     expect(content).toContain('"He said ""hello"""');
 
-    // Cleanup
     unlinkSync(filePath);
     try { unlinkSync(tmpDir); } catch { /* ignore */ }
   });
@@ -64,7 +60,6 @@ describe('CSV quoting', () => {
     const content = readFileSync(filePath, 'utf-8');
     expect(content).toContain('John,25');
 
-    // Cleanup
     unlinkSync(filePath);
     try { unlinkSync(tmpDir); } catch { /* ignore */ }
   });

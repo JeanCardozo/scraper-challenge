@@ -1,12 +1,9 @@
 /**
- * 7.6 Backoff jitter test.
+ * Test de jitter en backoff exponencial.
+ * Verifica que el cálculo de backoff produzca retardos dentro del
+ * rango de ±50% jitter desde la base configurada.
  *
- * Verifies that the exponential backoff calculation produces delays
- * within the ±50% jitter range from the configured base.
- *
- * Tests use a 100ms base to match the spec, checking that:
- * - All values are ≥ 1ms
- * - Values fall within expected range for each attempt
+ * Usa base de 100ms para coincidir con la especificación.
  */
 
 import { describe, it, expect } from 'vitest';

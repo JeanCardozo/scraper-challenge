@@ -1,21 +1,17 @@
 /**
- * @file Semaphore-based worker pool for concurrent PDF downloads.
+ * @file Pool de workers basado en semáforo para descargas PDF concurrentes.
  *
- * Manages a configurable pool of concurrent workers, per-file status
- * tracking, and job queueing. A single failed download does not affect
- * other jobs in the pool (individual failure isolation).
+ * Gestiona un pool configurable de workers concurrentes, seguimiento
+ * de estado por archivo y cola de trabajos. Una descarga fallida no
+ * afecta a otros trabajos (aislamiento individual de fallos).
  */
 
 import type { DownloadJob } from '../types.js';
 
-/**
- * Per-file download status.
- */
+/** Estado de descarga por archivo. */
 export type DownloadStatus = 'pending' | 'downloading' | 'success' | 'failed';
 
-/**
- * Result for a single queued download.
- */
+/** Resultado de una descarga encolada. */
 export interface DownloadResult {
   job: DownloadJob;
   status: DownloadStatus;
@@ -23,18 +19,15 @@ export interface DownloadResult {
   filePath?: string;
 }
 
-/**
- * Type for the actual download worker function.
- * The queue calls this for each job, respecting concurrency limits.
- */
+/** Tipo de la función工人 de descarga. La cola la llama por cada trabajo. */
 export type DownloadWorker = (job: DownloadJob) => Promise<DownloadResult>;
 
 /**
- * Semaphore-based download queue with configurable concurrency.
+ * Cola de descargas basada en semáforo con concurrencia configurable.
  *
- * Default pool size is 3 (range 1–10). Jobs are processed FIFO,
- * and each job is tracked with a status lifecycle:
- *   pending → downloading → success | failed
+ * El tamaño del pool por defecto es 3 (rango 1–10). Los trabajos se
+ * procesan en FIFO, y cada uno sigue el ciclo de vida:
+ *   pendiente → descargando → éxito | fallo
  */
 export class DownloadQueue {
   private readonly maxConcurrency: number;
@@ -45,8 +38,8 @@ export class DownloadQueue {
   private resolveDone: (() => void) | null = null;
 
   /**
-   * @param worker - Async function that performs a single download
-   * @param concurrency - Max concurrent downloads (1–10, default 3)
+   * @param worker - Función asíncrona que realiza una descarga
+   * @param concurrency - Máximo de descargas concurrentes (1–10, por defecto 3)
    */
   constructor(worker: DownloadWorker, concurrency = 3) {
     if (concurrency < 1 || concurrency > 10) {
@@ -57,9 +50,9 @@ export class DownloadQueue {
   }
 
   /**
-   * Add one or more download jobs to the queue.
+   * Añade uno o más trabajos de descarga a la cola.
    *
-   * @param jobs - Single job or array of jobs
+   * @param jobs - Trabajo único o array de trabajos
    */
   add(jobs: DownloadJob | DownloadJob[]): void {
     const items = Array.isArray(jobs) ? jobs : [jobs];
@@ -71,9 +64,9 @@ export class DownloadQueue {
   }
 
   /**
-   * Wait for all queued jobs to complete.
+   * Espera a que todos los trabajos encolados terminen.
    *
-   * @returns Array of download results in submission order
+   * @returns Array de resultados de descarga en orden de inserción
    */
   async wait(): Promise<DownloadResult[]> {
     if (this.activeCount === 0 && this.queue.length === 0) {
@@ -85,7 +78,7 @@ export class DownloadQueue {
   }
 
   /**
-   * Schedule next batch of workers from the queue.
+   * Programa el siguiente lote de workers desde la cola.
    */
   private schedule(): void {
     while (this.activeCount < this.maxConcurrency && this.queue.length > 0) {

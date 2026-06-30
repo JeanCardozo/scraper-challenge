@@ -1,9 +1,8 @@
 /**
- * 7.2 ViewState from XML test.
- *
- * Verifies that `JsfXmlParser.extractViewState` can extract the
- * ViewState from a JSF partial-response XML document where the
- * ViewState is wrapped in CDATA.
+ * Test de extracción de ViewState desde XML.
+ * Verifica que `JsfXmlParser.extractViewState` extraiga el ViewState
+ * de un documento XML de respuesta parcial JSF donde el ViewState
+ * está envuelto en CDATA.
  */
 
 import { describe, it, expect } from 'vitest';

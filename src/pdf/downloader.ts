@@ -1,16 +1,16 @@
 /**
- * @file PDF downloader with retry, content-disposition parsing, and
- * filename sanitization.
+ * @file Descargador PDF con reintento, parseo de content-disposition
+ * y sanitización de nombres de archivo.
  *
- * Downloads PDF documents via form POST using mojarra.jsfcljs-style
- * parameters. Handles redirects, extracts human-readable filenames
- * from the Content-Disposition header, and falls back to UUID-based
- * filenames when the header is absent.
+ * Descarga documentos PDF mediante POST con parámetros estilo
+ * mojarra.jsfcljs. Maneja redirecciones, extrae nombres legibles
+ * de la cabecera Content-Disposition y usa nombres basados en UUID
+ * como fallback.
  *
- * Retry behavior:
- * - Exponential backoff with ±50% jitter (default base 1000ms)
- * - Maximum 3 retries
- * - Does NOT retry on HTTP 4xx errors (except 429 rate-limited)
+ * Reintentos:
+ * - Backoff exponencial con ±50% jitter (base 1000ms por defecto)
+ * - Máximo 3 reintentos
+ * - NO reintenta en HTTP 4xx (excepto 429 rate-limited)
  */
 
 import { createWriteStream } from 'node:fs';
@@ -22,18 +22,18 @@ import axios from 'axios';
 import type { DownloadJob } from '../types.js';
 
 // ---------------------------------------------------------------------------
-// Retry configuration
+// Configuración de reintentos
 // ---------------------------------------------------------------------------
 
 /**
- * Options for the PDF downloader.
+ * Opciones del descargador PDF.
  */
 export interface DownloaderOptions {
-  /** Base backoff delay in ms (default: 1000) */
+  /** Retardo base de backoff en ms (por defecto: 1000) */
   backoffBaseMs?: number;
-  /** Maximum retry attempts (default: 3) */
+  /** Máximo de reintentos (por defecto: 3) */
   maxRetries?: number;
-  /** Output directory for downloaded files (default: current dir) */
+  /** Directorio de salida (por defecto: directorio actual) */
   outDir?: string;
 }
 
@@ -44,14 +44,14 @@ const DEFAULTS: Required<DownloaderOptions> = {
 };
 
 // ---------------------------------------------------------------------------
-// Filename sanitization
+// Sanitización de nombres de archivo
 // ---------------------------------------------------------------------------
 
 /**
- * Character replacement map for sanitizing filenames.
+ * Mapa de reemplazo de caracteres para sanitizar nombres.
  *
- * Maps special characters commonly found in Peruvian legal document
- * filenames to safe ASCII equivalents.
+ * Mapea caracteres especiales comunes en nombres de documentos
+ * legales peruanos a equivalentes ASCII seguros.
  */
 const SANITIZE_MAP: Record<string, string> = {
   '°': 'o',
@@ -71,11 +71,11 @@ const SANITIZE_MAP: Record<string, string> = {
 };
 
 /**
- * Sanitize a filename by replacing special characters with safe
- * alternatives.
+ * Sanitiza un nombre de archivo reemplazando caracteres especiales
+ * con alternativas seguras.
  *
- * @param name - Raw filename (without directory path)
- * @returns Sanitized filename safe for all major filesystems
+ * @param name - Nombre crudo (sin ruta de directorio)
+ * @returns Nombre sanitizado, seguro para cualquier sistema de archivos
  */
 function sanitizeFilename(name: string): string {
   let result = '';
@@ -86,28 +86,28 @@ function sanitizeFilename(name: string): string {
 }
 
 /**
- * Extract a filename from a Content-Disposition header value.
+ * Extrae el nombre de archivo del valor de una cabecera Content-Disposition.
  *
- * Handles both `filename="..."` and `filename*=UTF-8''...` formats.
- * Returns the raw filename before sanitization.
+ * Soporta formatos `filename="..."` y `filename*=UTF-8''...`.
+ * Devuelve el nombre crudo antes de sanitizar.
  *
- * @param headerValue - Raw Content-Disposition header string
- * @returns Extracted filename or null if header is missing/unparseable
+ * @param headerValue - Cabecera Content-Disposition cruda
+ * @returns Nombre extraído o null si la cabecera falta o no es parseable
  */
 export function extractFilenameFromHeader(headerValue: string | null | undefined): string | null {
   if (!headerValue) return null;
 
-  // Try filename* first (RFC 5987 encoded)
+  // Intentar filename* primero (RFC 5987)
   const starMatch = headerValue.match(/filename\*\s*=\s*(?:UTF-8|ISO-8859-1)''([^;\s]+)/i);
   if (starMatch?.[1]) {
     return decodeURIComponent(starMatch[1]);
   }
 
-  // Try regular filename="..."
+  // Intentar filename="..."
   const plainMatch = headerValue.match(/filename\s*=\s*"([^"]+)"/i);
   if (plainMatch?.[1]) return plainMatch[1];
 
-  // Try bare filename=value (without quotes)
+  // Intentar filename=valor (sin comillas)
   const bareMatch = headerValue.match(/filename\s*=\s*([^;\s]+)/i);
   if (bareMatch?.[1]) return bareMatch[1];
 
@@ -119,35 +119,35 @@ export function extractFilenameFromHeader(headerValue: string | null | undefined
 // ---------------------------------------------------------------------------
 
 /**
- * Calculate backoff delay with ±50% jitter.
+ * Calcula el retardo de backoff con ±50% jitter.
  *
- * Formula: `delay = base * 2^attempt * (0.5 + Math.random())`
+ * Fórmula: `delay = base * 2^attempt * (0.5 + Math.random())`
  *
- * @param baseMs - Base delay in milliseconds
- * @param attempt - Current retry attempt index (0-based)
- * @returns Delay in milliseconds (minimum 1ms)
+ * @param baseMs - Retardo base en milisegundos
+ * @param attempt - Índice del intento actual (base 0)
+ * @returns Retardo en milisegundos (mínimo 1ms)
  */
 export function calculateBackoff(baseMs: number, attempt: number): number {
   const exponential = baseMs * Math.pow(2, attempt);
-  const jitter = 0.5 + Math.random(); // 0.5 to 1.5
+  const jitter = 0.5 + Math.random(); // 0.5 a 1.5
   return Math.max(1, Math.round(exponential * jitter));
 }
 
 // ---------------------------------------------------------------------------
-// Main download function
+// Descarga principal
 // ---------------------------------------------------------------------------
 
 /**
- * Build the form POST payload for a JSF PDF download request.
+ * Construye el payload POST para una solicitud de descarga JSF PDF.
  *
- * Uses mojarra.jsfcljs-style parameters:
- * - javax.faces.source: the source component (form ID)
- * - javax.faces.partial: false (full page request)
- * - javax.faces.ViewState: optional ViewState from session
- * - param_uuid: the document UUID
+ * Usa parámetros estilo mojarra.jsfcljs:
+ * - javax.faces.source: componente fuente (ID del formulario)
+ * - javax.faces.partial: false (petición de página completa)
+ * - javax.faces.ViewState: ViewState opcional de la sesión
+ * - param_uuid: UUID del documento
  *
- * @param job - Download job with UUID and form params
- * @returns URLSearchParams for the POST body
+ * @param job - Trabajo de descarga con UUID y parámetros de formulario
+ * @returns URLSearchParams para el cuerpo del POST
  */
 function buildDownloadPayload(job: DownloadJob): URLSearchParams {
   const params: Record<string, string> = {
@@ -156,7 +156,6 @@ function buildDownloadPayload(job: DownloadJob): URLSearchParams {
     param_uuid: job.uuid,
   };
 
-  // Forward any extra form params from the adapter
   for (const [key, value] of Object.entries(job.formParams)) {
     if (key !== '_formId' && !params[key]) {
       params[key] = value;
@@ -167,11 +166,11 @@ function buildDownloadPayload(job: DownloadJob): URLSearchParams {
 }
 
 /**
- * Download a single PDF file with retry logic.
+ * Descarga un único archivo PDF con lógica de reintento.
  *
- * @param job - Download job specification
- * @param options - Downloader options (backoff, retries, output dir)
- * @returns The file path where the PDF was saved
+ * @param job - Especificación del trabajo de descarga
+ * @param options - Opciones del descargador (backoff, reintentos, directorio)
+ * @returns Ruta del archivo donde se guardó el PDF
  */
 export async function downloadPdf(
   job: DownloadJob,
@@ -186,7 +185,7 @@ export async function downloadPdf(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      // Do not retry on 4xx except 429 (rate-limited)
+      // No reintentar en 4xx excepto 429 (rate-limited)
       if (isNonRetryable4xx(error)) {
         console.warn(
           `[downloader] Non-retryable error for ${job.uuid}: ${lastError.message}`,
@@ -208,9 +207,9 @@ export async function downloadPdf(
 }
 
 /**
- * Attempt a single download without retry logic.
+ * Intenta una descarga sin lógica de reintento.
  *
- * @returns The saved file path
+ * @returns Ruta del archivo guardado
  */
 async function attemptDownload(job: DownloadJob, outDir: string): Promise<string> {
   await mkdir(outDir, { recursive: true });
@@ -225,28 +224,27 @@ async function attemptDownload(job: DownloadJob, outDir: string): Promise<string
     responseType: 'arraybuffer',
     maxRedirects: 10,
     timeout: 30_000,
-    // Validate status: accept any 2xx or redirect
     validateStatus: (status) => (status >= 200 && status < 300) || [301, 302, 307, 308].includes(status),
   });
 
-  // Determine filename
+  // Determinar nombre de archivo
   const contentDisposition = response.headers['content-disposition'] as string | undefined;
   let filename = extractFilenameFromHeader(contentDisposition ?? null);
 
   if (!filename) {
-    // Fallback to UUID-based filename
+    // Fallback a nombre basado en UUID
     filename = `${job.uuid}.pdf`;
     console.warn(
       `[downloader] No Content-Disposition header for ${job.uuid}, using fallback "${filename}"`,
     );
   }
 
-  // Sanitize and ensure .pdf extension
+  // Sanitizar y asegurar extensión .pdf
   const sanitized = sanitizeFilename(filename);
   const finalName = sanitized.toLowerCase().endsWith('.pdf') ? sanitized : `${sanitized}.pdf`;
   const filePath = path.join(outDir, finalName);
 
-  // Write to disk
+  // Escribir a disco
   const stream = createWriteStream(filePath);
   try {
     stream.write(Buffer.from(response.data as ArrayBuffer));
@@ -261,8 +259,8 @@ async function attemptDownload(job: DownloadJob, outDir: string): Promise<string
 }
 
 /**
- * Check if an error represents a non-retryable HTTP 4xx (except 429).
- * Also matches axios' error-wrapping for HTTP status codes.
+ * Verifica si un error representa un HTTP 4xx no reintentable (excepto 429).
+ * También detecta el error envuelto de axios para códigos de estado HTTP.
  */
 export function isNonRetryable4xx(error: unknown): boolean {
   if (error && typeof error === 'object' && 'response' in error) {
@@ -276,11 +274,11 @@ export function isNonRetryable4xx(error: unknown): boolean {
 }
 
 /**
- * Download a single PDF and wrap the result for queue consumption.
+ * Descarga un PDF y envuelve el resultado para consumo por la cola.
  *
- * @param job - Download job
- * @param options - Downloader options
- * @returns DownloadResult with status and file path
+ * @param job - Trabajo de descarga
+ * @param options - Opciones del descargador
+ * @returns DownloadResult con estado y ruta
  */
 export async function queueableDownload(
   job: DownloadJob,

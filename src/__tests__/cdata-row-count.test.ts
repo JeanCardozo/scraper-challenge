@@ -1,8 +1,7 @@
 /**
- * 7.3 CDATA row count test.
- *
- * Verifies that `JsfXmlParser.parseRows` correctly extracts CDATA-wrapped
- * HTML tables and returns the expected number of `<tr>` elements.
+ * Test de conteo de filas desde CDATA.
+ * Verifica que `JsfXmlParser.parseRows` extraiga correctamente tablas
+ * HTML envueltas en CDATA y devuelva el número esperado de `<tr>`.
  */
 
 import { describe, it, expect } from 'vitest';

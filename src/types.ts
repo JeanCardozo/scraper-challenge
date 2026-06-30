@@ -1,62 +1,62 @@
 /**
- * Configuration for a single data section/table on the target page.
- * Each section corresponds to a PrimeFaces DataTable with its own
- * URL path, form ID, and widget variable.
+ * Configuración de una sección/mesa en la página destino.
+ * Cada sección corresponde a un PrimeFaces DataTable con su propia
+ * URL, ID de formulario y widget variable.
  */
 export interface SectionConfig {
-  /** Machine-readable key (e.g. "tfa", "dfsai") */
+  /** Clave interna (ej. "tfa", "dfsai") */
   key: string;
-  /** Human-readable label (e.g. "TFA", "DFSAI") */
+  /** Etiqueta legible (ej. "TFA", "DFSAI") */
   label: string;
-  /** URL path relative to baseUrl */
+  /** Ruta relativa a baseUrl */
   path: string;
-  /** Rows per page (dt_rows) */
+  /** Filas por página (dt_rows) */
   pageSize: number;
-  /** JSF form client ID for AJAX POST */
+  /** ID del formulario JSF para POST AJAX */
   formId: string;
-  /** PrimeFaces widget variable name */
+  /** Nombre del widget PrimeFaces */
   widgetVar: string;
 }
 
 /**
- * A single scraped record from a DataTable row.
- * Index signature allows dynamic field names from adapter mappings.
- * System fields (_section, _uuid) are always present.
+ * Registro individual extraído de una fila del DataTable.
+ * El índice dinámico permite nombres de campo variables por adapter.
+ * Los campos del sistema (_section, _uuid) siempre están presentes.
  */
 export interface ScrapedRecord {
   [field: string]: string | null;
-  /** Section key this record belongs to */
+  /** Sección a la que pertenece */
   _section: string;
-  /** UUID for PDF download, null if no download available */
+  /** UUID para descarga PDF, null si no hay descarga */
   _uuid: string | null;
 }
 
 /**
- * Describes a pending PDF download job extracted from a record.
+ * Trabajo de descarga PDF pendiente, extraído de un registro.
  */
 export interface DownloadJob {
-  /** UUID parameter value from the JSF click handler */
+  /** Valor del UUID del manejador onclick JSF */
   uuid: string;
-  /** Form action URL for the POST */
+  /** URL de acción del formulario */
   url: string;
-  /** Form parameters to send (includes param_uuid, etc.) */
+  /** Parámetros del formulario (incluye param_uuid, etc.) */
   formParams: Record<string, string>;
-  /** Current retry attempt count (0-based) */
+  /** Contador de reintentos (base 0) */
   retryCount: number;
 }
 
 /**
- * Configuration for data export formatting.
+ * Opciones de formato para la exportación de datos.
  */
 export interface ExportOptions {
-  /** Output format */
+  /** Formato de salida */
   format: 'jsonl' | 'csv';
-  /** Optional subset of fields to export (default: all) */
+  /** Subconjunto opcional de campos a exportar (por defecto: todos) */
   fieldFilter?: string[];
-  /** Append to existing file instead of overwriting */
+  /** Append en lugar de sobrescribir */
   append?: boolean;
 }
 
-// SiteAdapter is defined in src/scraper/adapter.ts
-// Re-exported here for convenience.
+// SiteAdapter se define en src/scraper/adapter.ts
+// Re-exportado aquí por conveniencia.
 export type { SiteAdapter } from './scraper/adapter.js';

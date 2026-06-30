@@ -3,57 +3,57 @@ import { HttpSession } from './session.js';
 import { JsfXmlParser } from './xml-parser.js';
 
 /**
- * PrimeFaces AJAX parameter names used in pagination requests.
- * Grouped here so a single edit adapts the engine to different
- * PrimeFaces versions or custom widget naming.
+ * Parámetros de paginación AJAX de PrimeFaces.
+ * Agrupados aquí para adaptar el motor a diferentes versiones
+ * de PrimeFaces o nombres de widget personalizados.
  */
 const PF_PARAMS = {
-  /** Partial AJAX marker */
+  /** Marcador de petición parcial AJAX */
   PARTIAL_AJAX: 'javax.faces.partial.ajax',
-  /** Partial render target list */
+  /** Lista de destinos de renderizado parcial */
   PARTIAL_RENDER: 'javax.faces.partial.render',
-  /** Behavior event type */
+  /** Tipo de evento de comportamiento */
   BEHAVIOR_EVENT: 'javax.faces.behavior.event',
-  /** JSF phase event */
+  /** Evento de fase JSF */
   EVENT: 'javax.faces.event',
-  /** PrimeFaces context type */
+  /** Contexto PrimeFaces */
   PF_CONTEXT: 'org.primefaces.faces.context',
-  /** Pagination context value */
+  /** Valor de contexto de paginación */
   PF_CONTEXT_PAGE: 'PAGE',
-  /** Behavior page event value */
+  /** Valor de evento de página del comportamiento */
   BEHAVIOR_PAGE: 'page',
-  /** Event page value */
+  /** Valor de evento de página */
   EVENT_PAGE: 'page',
-  /** Pagination flag suffix */
+  /** Sufijo del flag de paginación */
   PAGINATION_SUFFIX: '_pagination',
-  /** Offset param suffix */
+  /** Sufijo del parámetro de offset */
   FIRST_SUFFIX: '_first',
-  /** Page size param suffix */
+  /** Sufijo del parámetro de tamaño de página */
   ROWS_SUFFIX: '_rows',
-  /** Legacy dt_first param */
+  /** Parámetro legacy dt_first */
   DT_FIRST: 'dt_first',
-  /** Legacy dt_rows param */
+  /** Parámetro legacy dt_rows */
   DT_ROWS: 'dt_rows',
-  /** Legacy dt_page param */
+  /** Parámetro legacy dt_page */
   DT_PAGE: 'dt_page',
 } as const;
 
 /**
- * Configuration options for the scraper engine.
+ * Opciones de configuración del motor de scraping.
  */
 export interface EngineOptions {
-  /** Maximum retry attempts per page (default: 3) */
+  /** Máximo de reintentos por página (por defecto: 3) */
   maxRetries?: number;
-  /** Maximum pages to scrape per section (default: Infinity) */
+  /** Máximo de páginas a extraer por sección (por defecto: infinito) */
   maxPages?: number;
-  /** Base backoff delay in ms (default: 1000) */
+  /** Retardo base de backoff en ms (por defecto: 1000) */
   backoffBaseMs?: number;
-  /** Whether to stop on stale-session detection (default: true) */
+  /** Detener en sesión expirada (por defecto: true) */
   abortOnStaleSession?: boolean;
 }
 
 /**
- * Default engine option values.
+ * Valores por defecto de las opciones del motor.
  */
 const DEFAULTS: Required<EngineOptions> = {
   maxRetries: 3,
@@ -63,11 +63,11 @@ const DEFAULTS: Required<EngineOptions> = {
 };
 
 /**
- * Core paginated scraping engine for JSF/PrimeFaces DataTables.
+ * Motor de scraping paginado para DataTables JSF/PrimeFaces.
  *
- * Orchestrates offset-based pagination with ViewState rotation,
- * configurable retry with jittered exponential backoff, stale
- * session detection, and per-page failure isolation.
+ * Orquesta la paginación por offset con rotación de ViewState,
+ * reintentos configurables con backoff exponencial con jitter,
+ * detección de sesión expirada y aislamiento de errores por página.
  */
 export class ScraperEngine {
   private adapter: SiteAdapter;
@@ -87,14 +87,13 @@ export class ScraperEngine {
   }
 
   /**
-   * Scrape all records from a given section.
+   * Extrae todos los registros de una sección.
    *
-   * Iterates through pages using offset-based pagination,
-   * handling ViewState rotation, retries, and error isolation
-   * automatically.
+   * Itera las páginas usando paginación por offset, manejando
+   * rotación de ViewState, reintentos y aislamiento de errores.
    *
-   * @param section - Section configuration to scrape
-   * @returns Array of scraped records
+   * @param section - Configuración de la sección a scrapear
+   * @returns Array de registros extraídos
    */
   async scrapeSection(section: SectionConfig): Promise<ScrapedRecord[]> {
     const records: ScrapedRecord[] = [];
@@ -107,14 +106,14 @@ export class ScraperEngine {
       );
 
       if (pageRecords === null) {
-        // Per-page failure after exhausting retries — isolate and continue
+        // Falla página tras agotar reintentos — aislar y continuar
         offset += section.pageSize;
         pageCount++;
         continue;
       }
 
       if (pageRecords.length === 0) {
-        // Empty set — pagination complete
+        // Conjunto vacío — paginación completada
         break;
       }
 
@@ -127,7 +126,7 @@ export class ScraperEngine {
   }
 
   /**
-   * Build form-data payload for a PrimeFaces pagination request.
+   * Construye el payload del formulario para una petición de paginación PrimeFaces.
    */
   private buildPaginationPayload(
     section: SectionConfig,
@@ -152,9 +151,9 @@ export class ScraperEngine {
   }
 
   /**
-   * Fetch a single page with retry logic and backoff.
+   * Obtiene una página con lógica de reintento y backoff.
    *
-   * @returns ScrapedRecord[] for the page, or null if all retries failed
+   * @returns ScrapedRecord[] de la página, o null si todos los reintentos fallaron
    */
   private async fetchPageWithRetry(
     section: SectionConfig,
@@ -171,26 +170,25 @@ export class ScraperEngine {
         const response = await this.session.post(section.path, data);
         const xml = response.data as string;
 
-        // Stale session detection
+        // Detección de sesión expirada
         if (this.options.abortOnStaleSession && this.isStaleSession(xml)) {
           throw new StaleSessionError(
             `Session expired while scraping ${section.key} at offset ${offset}`,
           );
         }
 
-        // Extract new ViewState from response
+        // Extraer nuevo ViewState de la respuesta
         const newVs = this.xmlParser.extractViewState(xml);
         if (newVs) {
           this.session.updateViewState(newVs);
         }
 
-        // Parse rows from CDATA
+        // Parsear filas del CDATA
         const rows = this.xmlParser.parseRows(xml);
         if (!rows || rows.length === 0) {
           return [];
         }
 
-        // Map rows through adapter
         const pageRecords: ScrapedRecord[] = [];
         rows.each((idx) => {
           const $row = rows.eq(idx);
@@ -205,7 +203,7 @@ export class ScraperEngine {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
-        // Re-throw stale session errors immediately
+        // Re-lanzar errores de sesión expirada inmediatamente
         if (error instanceof StaleSessionError) {
           throw error;
         }
@@ -216,7 +214,7 @@ export class ScraperEngine {
       }
     }
 
-    // All retries exhausted — log and return null for isolation
+    // Reintentos agotados — log y null para aislamiento
     console.warn(
       `[engine] Page ${pageIndex} (offset ${offset}) failed after ${this.options.maxRetries + 1} attempts: ${lastError?.message}`,
     );
@@ -224,26 +222,24 @@ export class ScraperEngine {
   }
 
   /**
-   * Exponential backoff with ±50% jitter.
+   * Backoff exponencial con ±50% jitter.
    *
    * delay = base * 2^attempt * (0.5 + Math.random())
-   * This ensures each retry waits longer but with randomized
-   * variance to avoid thundering herd.
+   * Aleatorizado para evitar el efecto thundering herd.
    */
   private async backoff(attempt: number): Promise<void> {
     const base = this.options.backoffBaseMs;
     const exponential = base * Math.pow(2, attempt);
-    const jitter = 0.5 + Math.random(); // 0.5 to 1.5
+    const jitter = 0.5 + Math.random(); // 0.5 a 1.5
     const delay = Math.max(1, Math.round(exponential * jitter));
     return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   /**
-   * Detect stale session by checking if response contains
-   * login page indicators (login form, redirect patterns).
+   * Detecta sesión expirada verificando si la respuesta contiene
+   * indicadores de página de login (formulario de login, patrones de redirect).
    *
-   * Uses \b word boundaries to avoid false positives from
-   * unrelated text containing "login" or "form" substrings.
+   * Usa \b para evitar falsos positivos con texto que contenga "login" o "form".
    */
   public isStaleSession(xml: string): boolean {
     const loginPatterns = [
@@ -258,7 +254,7 @@ export class ScraperEngine {
 }
 
 /**
- * Error thrown when the JSF session expires mid-scrape.
+ * Error lanzado cuando la sesión JSF expira durante el scraping.
  */
 export class StaleSessionError extends Error {
   constructor(message: string) {

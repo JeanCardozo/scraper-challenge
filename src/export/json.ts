@@ -1,9 +1,9 @@
 /**
- * @file JSON Lines data export.
+ * @file Exportación de datos en JSON Lines.
  *
- * Writes scraped records as JSON Lines (one valid JSON object per line,
- * terminated by \n). Supports append mode for resumable runs and
- * optional field filtering.
+ * Escribe registros extraídos como JSON Lines (un objeto JSON válido
+ * por línea, terminado con \n). Soporta modo append para ejecuciones
+ * reanudables y filtrado opcional de campos.
  */
 
 import { createWriteStream } from 'node:fs';
@@ -12,25 +12,23 @@ import { once } from 'node:events';
 import type { ScrapedRecord } from '../types.js';
 
 /**
- * Options for the JSON Lines writer.
+ * Opciones del escritor JSON Lines.
  */
 export interface JsonLinesOptions {
-  /** Optional subset of fields to include (default: all non-system fields) */
+  /** Subconjunto opcional de campos a incluir */
   fieldFilter?: string[];
-  /** Append to existing file instead of overwriting (default: false) */
+  /** Append en lugar de sobrescribir (por defecto: false) */
   append?: boolean;
 }
 
 /**
- * Determine the ordered list of field names for export.
+ * Determina la lista ordenada de campos a exportar.
+ * Deriva los campos del primer registro, opcionalmente filtrados.
+ * Los campos del sistema (_section, _uuid) se incluyen por defecto.
  *
- * Derives fields from the first record, optionally filtered.
- * System fields (_section, _uuid) are included by default since
- * they carry important metadata.
- *
- * @param records - Record array (uses first for field discovery)
- * @param filter  - Optional field whitelist
- * @returns Ordered field name array
+ * @param records - Array de registros (usa el primero para descubrir campos)
+ * @param filter  - Lista blanca opcional de campos
+ * @returns Array ordenado de nombres de campo
  */
 function resolveFields(
   records: ScrapedRecord[],
@@ -42,14 +40,14 @@ function resolveFields(
 }
 
 /**
- * Write records to a JSON Lines file.
+ * Escribe registros en un archivo JSON Lines.
  *
- * Each record is serialized as a single JSON object followed by \n.
- * The file is created empty (0 bytes) when the record array is empty.
+ * Cada registro se serializa como un objeto JSON seguido de \n.
+ * El archivo se crea vacío (0 bytes) cuando el array de registros está vacío.
  *
- * @param records  - Records to write
- * @param filePath - Output file path
- * @param options  - Formatting options
+ * @param records  - Registros a escribir
+ * @param filePath - Ruta del archivo de salida
+ * @param options  - Opciones de formato
  */
 export async function writeJsonLines(
   records: ScrapedRecord[],

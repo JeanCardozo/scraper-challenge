@@ -1,8 +1,7 @@
 /**
- * 7.1 ViewState extraction from HTML test.
- *
- * Verifies that `HttpSession.extractViewStateFromHtml` can find the
- * hidden javax.faces.ViewState input in a full JSF HTML page.
+ * Test de extracción de ViewState desde HTML.
+ * Verifica que `HttpSession.extractViewStateFromHtml` encuentre el
+ * input oculto javax.faces.ViewState en una página HTML JSF completa.
  */
 
 import { describe, it, expect } from 'vitest';

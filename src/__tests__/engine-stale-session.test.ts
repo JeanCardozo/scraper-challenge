@@ -1,13 +1,13 @@
 /**
- * Unit tests for ScraperEngine.isStaleSession() — login page detection
- * in JSF AJAX responses.
+ * Tests unitarios de ScraperEngine.isStaleSession() — detección de
+ * página de login en respuestas AJAX JSF.
  *
- * The engine should detect a stale session when the AJAX response
- * contains login page HTML markers (j_username, Iniciar Sesión, etc.)
- * and abort with a StaleSessionError.
+ * El motor debe detectar sesión expirada cuando la respuesta AJAX
+ * contiene marcadores HTML de página de login (j_username, Iniciar
+ * Sesión, etc.) y abortar con StaleSessionError.
  *
- * isStaleSession was made public on the ScraperEngine class so it can
- * be tested directly without a live HTTP server.
+ * isStaleSession se expuso como público en ScraperEngine para poder
+ * testearla directamente sin servidor HTTP.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -15,7 +15,7 @@ import { ScraperEngine } from '../scraper/engine.js';
 import type { SiteAdapter, SectionConfig, ScrapedRecord, DownloadJob } from '../types.js';
 
 // ---------------------------------------------------------------------------
-// Minimal mocks for engine construction
+// Mocks mínimos para construir el engine
 // ---------------------------------------------------------------------------
 
 class TestAdapter implements SiteAdapter {

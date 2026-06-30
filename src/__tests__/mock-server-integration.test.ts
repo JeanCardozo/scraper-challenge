@@ -1,10 +1,8 @@
 /**
- * 7.7 Mock PrimeFaces HTTP server integration test.
- *
- * Spins up a local HTTP server that simulates a JSF/PrimeFaces
- * partial-response endpoint with pagination. Tests that the
- * scraper engine correctly handles multiple pagination offsets
- * and returns the expected number of records.
+ * Test de integración con servidor HTTP mock PrimeFaces.
+ * Levanta un servidor HTTP local que simula un endpoint de respuesta
+ * parcial JSF/PrimeFaces con paginación. Verifica que el motor de
+ * scraping maneje correctamente múltiples offsets de paginación.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -14,7 +12,7 @@ import { HttpSession } from '../scraper/session.js';
 import type { SiteAdapter, SectionConfig, ScrapedRecord, DownloadJob } from '../types.js';
 
 // ---------------------------------------------------------------------------
-// Mock adapter
+// Adapter mock
 // ---------------------------------------------------------------------------
 
 class MockAdapter implements SiteAdapter {
@@ -55,16 +53,15 @@ class MockAdapter implements SiteAdapter {
 }
 
 // ---------------------------------------------------------------------------
-// Mock server
+// Servidor mock
 // ---------------------------------------------------------------------------
 
 /**
- * Generate JSF partial-response XML for a given offset.
- * Returns records 1–10 at each offset, or empty when offset >= 50.
+ * Genera XML de respuesta parcial JSF para un offset dado.
+ * Devuelve registros 1–10 en cada offset, o vacío cuando offset >= 50.
  */
 function generateResponse(offset: number, viewState: string): string {
   if (offset >= 50) {
-    // Return empty table - no more records
     return `<?xml version="1.0" encoding="UTF-8"?>
 <partial-response>
 <changes>
@@ -100,21 +97,19 @@ let port: number;
 let pageCount = 0;
 
 /**
- * Request handler for the mock JSF server.
+ * Manejador de peticiones del servidor JSF mock.
  *
- * - GET /test.xhtml returns HTML with initial ViewState
- * - POST /test.xhtml returns JSF partial-response XML with paginated data
- * - Tracks dt_first offset to simulate pagination
+ * - GET /test.xhtml devuelve HTML con ViewState inicial
+ * - POST /test.xhtml devuelve XML de respuesta parcial con datos paginados
+ * - Rastrea el offset dt_first para simular paginación
  */
 function requestHandler(
   req: import('node:http').IncomingMessage,
   res: import('node:http').ServerResponse,
 ): void {
-  // Parse URL
   const url = new URL(req.url || '/', `http://localhost:${port}`);
 
   if (req.method === 'GET' && url.pathname === '/test.xhtml') {
-    // Return initial HTML page with ViewState
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
       'Set-Cookie': 'JSESSIONID=mock-session-123; Path=/; HttpOnly',
@@ -129,7 +124,6 @@ function requestHandler(
   }
 
   if (req.method === 'POST' && url.pathname === '/test.xhtml') {
-    // Parse form data
     let body = '';
     req.on('data', (chunk: string) => { body += chunk; });
     req.on('end', () => {
@@ -148,7 +142,6 @@ function requestHandler(
     return;
   }
 
-  // 404 for unknown paths
   res.writeHead(404);
   res.end('Not Found');
 }
@@ -178,32 +171,27 @@ describe('Mock PrimeFaces integration', () => {
     const adapter = new MockAdapter(baseUrl);
     const session = new HttpSession(baseUrl);
 
-    // Reset page count
     pageCount = 0;
 
-    // Initialize session
     await session.init('/test.xhtml');
 
-    // Create engine with minimal backoff for fast tests
     const engine = new ScraperEngine(adapter, session, {
       maxRetries: 2,
       backoffBaseMs: 10,
     });
 
-    // Scrape
     const section = adapter.sections[0]!;
     const records = await engine.scrapeSection(section);
 
-    // Should have 50 records (5 pages × 10 records)
+    // Debería tener 50 registros (5 páginas × 10 registros)
     expect(records.length).toBe(50);
 
-    // Verify record content
     expect(records[0]?.nro).toBe('1');
     expect(records[0]?.name).toBe('Record 1');
     expect(records[49]?.nro).toBe('50');
     expect(records[49]?.name).toBe('Record 50');
 
-    // 5 data pages (offsets 0, 10, 20, 30, 40) + 1 empty-set termination (offset 50)
+    // 5 páginas de datos (offsets 0, 10, 20, 30, 40) + 1 terminación vacía (offset 50)
     expect(pageCount).toBe(6);
   });
 
@@ -216,12 +204,10 @@ describe('Mock PrimeFaces integration', () => {
 
     await session.init('/test.xhtml');
 
-    // Use a different path that returns empty
-    // We'll modify by using engine directly with a maxPages limit to test
     const engine = new ScraperEngine(adapter, session, {
       maxRetries: 1,
       backoffBaseMs: 10,
-      maxPages: 0, // Should produce no pages
+      maxPages: 0, // No debe producir páginas
     });
 
     const section = adapter.sections[0]!;

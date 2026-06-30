@@ -1,25 +1,25 @@
 #!/usr/bin/env node
 /**
- * @file CLI entry point for the JSF/PrimeFaces site scraper.
+ * @file Punto de entrada CLI para el scraper de sitios JSF/PrimeFaces.
  *
- * Usage:
+ * Uso:
  *   npx tsx src/cli/index.ts <section> <out-dir> [options]
  *
- * Sections:
+ * Secciones:
  *   tfa   - Tribunal de Fiscalización Ambiental
  *   dfsai - Dirección de Fiscalización Sanción y Asuntos de Impacto
  *   iga   - Instrumentos de Gestión Ambiental
- *   all   - Scrape all three sections
+ *   all   - Scrapear las tres secciones
  *
- * Options:
- *   --resume         Skip existing JSONL/CSV files, retry only failed downloads
- *   --concurrency N  PDF download concurrency (1–10, default 3)
- *   --help           Show this help message
+ * Opciones:
+ *   --resume         Omitir archivos JSONL/CSV existentes
+ *   --concurrency N  Concurrencia de descarga PDF (1–10, default 3)
+ *   --help           Mostrar ayuda
  *
- * Phase orchestration:
- *   1. Scrape metadata records via paginated AJAX
- *   2. Export to JSON Lines + CSV
- *   3. Download PDFs using extracted UUIDs
+ * Fases:
+ *   1. Extraer registros mediante AJAX paginado
+ *   2. Exportar a JSON Lines + CSV
+ *   3. Descargar PDFs usando los UUIDs extraídos
  */
 
 import { existsSync } from 'node:fs';
@@ -35,7 +35,7 @@ import { DownloadQueue } from '../pdf/queue.js';
 import { queueableDownload } from '../pdf/downloader.js';
 
 // ---------------------------------------------------------------------------
-// Help
+// Ayuda
 // ---------------------------------------------------------------------------
 
 const HELP = `
@@ -67,7 +67,7 @@ function printHelp(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Argument parsing
+// Parseo de argumentos
 // ---------------------------------------------------------------------------
 
 interface CliOptions {
@@ -82,7 +82,6 @@ function parseArgs(argv: string[]): CliOptions {
 
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     printHelp();
-    // unreachable
   }
 
   const section = args[0]?.toLowerCase();
@@ -109,7 +108,7 @@ function parseArgs(argv: string[]): CliOptions {
 }
 
 // ---------------------------------------------------------------------------
-// Section resolution
+// Resolución de secciones
 // ---------------------------------------------------------------------------
 
 function resolveSections(adapter: OefaAdapter, sectionArg: string): string[] {
@@ -125,7 +124,7 @@ function resolveSections(adapter: OefaAdapter, sectionArg: string): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 1: Scrape a single section
+// Fase 1: Scrapear una sección
 // ---------------------------------------------------------------------------
 
 async function scrapeSection(
@@ -167,7 +166,7 @@ async function scrapeSection(
 }
 
 // ---------------------------------------------------------------------------
-// Phase 2: Export
+// Fase 2: Exportar
 // ---------------------------------------------------------------------------
 
 async function exportRecords(
@@ -182,13 +181,13 @@ async function exportRecords(
   const jsonExists = existsSync(jsonPath);
   const csvExists = existsSync(csvPath);
 
-  // In resume mode, skip if both files exist
+  // En modo resume, omitir si ambos archivos existen
   if (resume && jsonExists && csvExists) {
     console.log(`[export] Skipping ${sectionKey} — files already exist (--resume)`);
     return;
   }
 
-  const append = resume; // Append mode when resuming
+  const append = resume;
 
   if (!resume || !jsonExists) {
     await writeJsonLines(records, jsonPath, { append });
@@ -206,7 +205,7 @@ async function exportRecords(
 }
 
 // ---------------------------------------------------------------------------
-// Phase 3: Download PDFs
+// Fase 3: Descargar PDFs
 // ---------------------------------------------------------------------------
 
 interface PdfStats {
@@ -224,7 +223,6 @@ async function downloadPdfs(
   concurrency: number,
   resume: boolean,
 ): Promise<PdfStats> {
-  // Build download jobs from records
   const jobs: DownloadJob[] = [];
   for (const record of records) {
     adapter.useSection(sectionKey);
@@ -241,7 +239,7 @@ async function downloadPdfs(
 
   console.log(`[download] ${jobs.length} PDF(s) queued (concurrency: ${concurrency})`);
 
-  // Resume: filter out already-downloaded UUIDs
+  // Resume: filtrar UUIDs ya descargados
   let filteredJobs = jobs;
   if (resume) {
     const existing = new Set<string>();
@@ -262,7 +260,7 @@ async function downloadPdfs(
     return { total: jobs.length, skipped: jobs.length, success: 0, failed: 0 };
   }
 
-  // Process via queue
+  // Procesar mediante cola
   const queue = new DownloadQueue(
     async (job) => queueableDownload(job, { outDir }),
     concurrency,
@@ -307,7 +305,7 @@ async function main(): Promise<void> {
   let totalPdfFailed = 0;
 
   for (const sectionKey of sections) {
-    // Phase 1: Scrape
+    // Fase 1: Scrapear
     const records = await scrapeSection(adapter, sectionKey);
     if (records.length === 0) {
       console.warn(`[cli] No records scraped for "${sectionKey}". Skipping export and download.`);
@@ -315,10 +313,10 @@ async function main(): Promise<void> {
     }
     totalRecords += records.length;
 
-    // Phase 2: Export
+    // Fase 2: Exportar
     await exportRecords(records, sectionKey, opts.outDir, opts.resume);
 
-    // Phase 3: Download PDFs
+    // Fase 3: Descargar PDFs
     const pdfStats = await downloadPdfs(
       records, adapter, sectionKey, opts.outDir, opts.concurrency, opts.resume,
     );
@@ -326,7 +324,6 @@ async function main(): Promise<void> {
     totalPdfFailed += pdfStats.failed;
   }
 
-  // Summary
   console.log('\n=== Summary ===');
   console.log(`Records scraped:  ${totalRecords}`);
   console.log(`PDFs downloaded:  ${totalPdfSuccess}`);

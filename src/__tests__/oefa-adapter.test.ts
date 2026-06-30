@@ -1,10 +1,10 @@
 /**
- * Unit tests for OefaAdapter — section config, row parsing, and PDF
- * link extraction via mojarra.jsfcljs param_uuid.
+ * Tests unitarios de OefaAdapter — configuración de secciones, parseo
+ * de filas y extracción de enlaces PDF mediante param_uuid.
  *
- * NOTE: The extractParamUuid regex expects keys to be quoted
- * (e.g. 'param_uuid':'value'), matching the actual mojarra.jsfcljs
- * output format where object keys are wrapped in quotes.
+ * NOTA: La regex de extractParamUuid espera claves entrecomilladas
+ * (ej. 'param_uuid':'value'), que coincide con el formato real de
+ * salida de mojarra.jsfcljs.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -92,7 +92,7 @@ describe('OefaAdapter', () => {
       expect(record).not.toBeNull();
       expect(record!._section).toBe('dfsai');
       expect(record!.nroResolucionSancion).toBe('RES-SANC-001');
-      // TFA field should NOT be present under DFSAI
+      // El campo TFA no debe estar presente bajo DFSAI
       expect(record!.nroResolucionApelacion).toBeUndefined();
     });
   });

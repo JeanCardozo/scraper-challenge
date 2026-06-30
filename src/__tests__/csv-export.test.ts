@@ -1,7 +1,6 @@
 /**
- * Unit tests for CSV export — writeCsv().
- *
- * Covers: append mode (no duplicate header), field filtering.
+ * Tests unitarios de exportación CSV — writeCsv().
+ * Cubre: modo append (sin cabecera duplicada) y filtrado de campos.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -15,12 +14,12 @@ describe('CSV export', () => {
     const tmpDir = mkdtempSync(join(tmpdir(), 'csv-test-'));
     const filePath = join(tmpDir, 'append.csv');
 
-    // Write first batch: creates file with BOM + header + 1 data row
+    // Primer lote: crea archivo con BOM + cabecera + 1 fila de datos
     await writeCsv([
       { _section: 'tfa', _uuid: null, nro: '1', expediente: 'EXP-001' },
     ], filePath);
 
-    // Append second batch: should add data rows only
+    // Segundo lote (append): solo añade filas de datos
     await writeCsv([
       { _section: 'tfa', _uuid: null, nro: '2', expediente: 'EXP-002' },
     ], filePath, { append: true });
@@ -28,23 +27,19 @@ describe('CSV export', () => {
     const content = readFileSync(filePath, 'utf-8');
     const lines = content.trim().split('\n');
 
-    // BOM is prepended to header on the first line
-    // → 1 header + 2 data rows = 3 lines total
+    // 1 cabecera + 2 filas de datos = 3 líneas total
     expect(lines).toHaveLength(3);
 
-    // Header appears only once (on first line)
+    // La cabecera aparece solo una vez (en la primera línea)
     expect(lines[0]!).toContain('_section');
     expect(lines[0]!).toContain('expediente');
 
-    // Verify only one header line exists
     const headerCount = lines.filter((l) => l.includes('_section')).length;
     expect(headerCount).toBe(1);
 
-    // Data rows
     expect(lines[1]!).toContain('1');
     expect(lines[2]!).toContain('2');
 
-    // Cleanup
     unlinkSync(filePath);
     try { unlinkSync(tmpDir); } catch { /* ignore */ }
   });
@@ -70,19 +65,17 @@ describe('CSV export', () => {
     const content = readFileSync(filePath, 'utf-8');
     const lines = content.trim().split('\n');
 
-    // Header should contain only the 2 filtered fields (BOM is prepended)
+    // La cabecera debe contener solo los 2 campos filtrados (BOM antepuesto)
     expect(lines[0]!).toContain('nro,expediente');
-    // Should NOT contain the other fields
     expect(lines[0]!).not.toContain('administrado');
     expect(lines[0]!).not.toContain('sector');
 
-    // Data row should have exactly 2 comma-separated values
+    // La fila de datos debe tener exactamente 2 valores separados por coma
     const dataFields = lines[1]!.split(',');
     expect(dataFields).toHaveLength(2);
     expect(dataFields[0]).toBe('1');
     expect(dataFields[1]).toBe('EXP-001');
 
-    // Cleanup
     unlinkSync(filePath);
     try { unlinkSync(tmpDir); } catch { /* ignore */ }
   });

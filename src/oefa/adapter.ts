@@ -1,13 +1,14 @@
 /**
- * @file OEFA site adapter — SiteAdapter implementation for the Peruvian
- * environmental authority's JSF/PrimeFaces public consultation system.
+ * @file Adapter OEFA — implementación de SiteAdapter para el sistema
+ * de consulta pública JSF/PrimeFaces de la autoridad ambiental peruana.
  *
- * Three sections are configured: TFA (Tribunal de Fiscalización Ambiental),
- * DFSAI (Dirección de Fiscalización Sanción y Asuntos de Impacto), and
+ * Configura tres secciones: TFA (Tribunal de Fiscalización Ambiental),
+ * DFSAI (Dirección de Fiscalización Sanción y Asuntos de Impacto), e
  * IGA (Instrumentos de Gestión Ambiental).
  *
- * Column-to-field mappings are defined per section using 0-based <td> indices.
- * PDF download parameters are extracted from mojarra.jsfcljs onclick handlers.
+ * Los mapeos columna-a-campo se definen por sección usando índices
+ * de <td> base 0. Los parámetros de descarga PDF se extraen de los
+ * manejadores onclick de mojarra.jsfcljs.
  */
 
 import type { Cheerio } from 'cheerio';
@@ -21,20 +22,20 @@ import type {
 } from '../types.js';
 
 // ---------------------------------------------------------------------------
-// Site constants
+// Constantes del sitio
 // ---------------------------------------------------------------------------
 
 const BASE_URL = 'https://publico.oefa.gob.pe/repdig/consulta';
 
 // ---------------------------------------------------------------------------
-// Section definitions
+// Definiciones de secciones
 // ---------------------------------------------------------------------------
 
 /**
- * Column-to-field mapping per section key.
- * Keys are section keys; values are arrays of field names in column order
- * (0-based <td> index). The last column in each table typically contains
- * the download action link and is NOT mapped to a data field.
+ * Mapeo columna-a-campo por clave de sección.
+ * Las claves son los identificadores de sección; los valores son arrays
+ * de nombres de campo en orden de columna (índice <td> base 0).
+ * La última columna suele contener el enlace de descarga y NO se mapea.
  */
 const FIELD_MAPS: Record<string, string[]> = {
   tfa: [
@@ -63,8 +64,8 @@ const FIELD_MAPS: Record<string, string[]> = {
 };
 
 /**
- * All available OEFA sections.
- * Each maps to a PrimeFaces DataTable on a distinct JSF page.
+ * Todas las secciones OEFA disponibles.
+ * Cada una mapea a un PrimeFaces DataTable en una página JSF distinta.
  */
 const SECTIONS: SectionConfig[] = [
   {
@@ -98,18 +99,18 @@ const SECTIONS: SectionConfig[] = [
 // ---------------------------------------------------------------------------
 
 /**
- * Extract the `param_uuid` value from a mojarra.jsfcljs onclick handler.
+ * Extrae el valor de `param_uuid` de un manejador onclick mojarra.jsfcljs.
  *
- * The onclick attribute follows this pattern:
+ * El atributo onclick sigue este patrón:
  * ```
  * mojarra.jsfcljs(document.getElementById('...'),{...'param_uuid':'<uuid>'...})
  * ```
  *
- * @param onclick - Raw onclick attribute string
- * @returns The extracted UUID, or null if not found
+ * @param onclick - Atributo onclick crudo
+ * @returns El UUID extraído, o null si no se encuentra
  */
 export function extractParamUuid(onclick: string): string | null {
-  // Match both single and double quoted variants of param_uuid
+  // Soporta clave con comillas simples o dobles
   const match = onclick.match(/param_uuid['"]\s*:\s*['"]([^'"]+)['"]/);
   return match?.[1] ?? null;
 }
@@ -119,40 +120,40 @@ export function extractParamUuid(onclick: string): string | null {
 // ---------------------------------------------------------------------------
 
 /**
- * OEFA site adapter for the JSF scraping engine.
+ * Adapter OEFA para el motor de scraping JSF.
  *
- * Provides section configurations (TFA / DFSAI / IGA), column-to-field
- * row parsing, and PDF download parameter extraction.
+ * Provee configuraciones de sección (TFA / DFSAI / IGA), parseo de filas
+ * con mapeo columna-a-campo y extracción de parámetros de descarga PDF.
  *
- * **Important**: This adapter is stateful. The `currentSection` property
- * tells `parseRow` which field mapping to apply. Call `useSection(key)`
- * before processing each section's rows.
+ * **Importante**: Este adapter tiene estado. La propiedad `currentSection`
+ * indica a `parseRow` qué mapeo de campos aplicar. Llama a `useSection(key)`
+ * antes de procesar las filas de cada sección.
  */
 export class OefaAdapter implements SiteAdapter {
-  /** Human-readable site name */
+  /** Nombre legible del sitio */
   readonly name = 'OEFA';
-  /** Base URL for all OEFA consultation endpoints */
+  /** URL base para todos los endpoints de consulta OEFA */
   readonly baseUrl = BASE_URL;
-  /** Default formId (overridden by SectionConfig at runtime) */
+  /** formId por defecto (se sobrescribe con SectionConfig en runtime) */
   readonly formId = SECTIONS[0]!.formId;
-  /** Default widgetVar (overridden by SectionConfig at runtime) */
+  /** widgetVar por defecto (se sobrescribe con SectionConfig en runtime) */
   readonly widgetVar = SECTIONS[0]!.widgetVar;
-  /** All available sections */
+  /** Todas las secciones disponibles */
   readonly sections = SECTIONS;
 
   /**
-   * Currently active section key for row parsing.
-   * Set via `useSection()` before scraping a section.
+   * Clave de sección activa para el parseo de filas.
+   * Se establece con `useSection()` antes de scrapear una sección.
    */
   private currentSection: string = 'tfa';
 
   /**
-   * Switch the adapter to a specific section's field mapping.
+   * Cambia el adapter al mapeo de campos de una sección específica.
    *
-   * Must be called BEFORE processing rows for a new section.
-   * Throws if the section key is unknown.
+   * Debe llamarse ANTES de procesar filas de una nueva sección.
+   * Lanza error si la clave es desconocida.
    *
-   * @param key - Section key ("tfa", "dfsai", or "iga")
+   * @param key - Clave de sección ("tfa", "dfsai" o "iga")
    */
   useSection(key: string): void {
     if (!FIELD_MAPS[key]) {
@@ -165,31 +166,30 @@ export class OefaAdapter implements SiteAdapter {
   }
 
   /**
-   * Resolve a section configuration by key.
+   * Obtiene la configuración de una sección por clave.
    *
-   * @param key - Section key to look up
-   * @returns The section config, or null if not found
+   * @param key - Clave de sección a buscar
+   * @returns Configuración de la sección, o null si no existe
    */
   getSection(key: string): SectionConfig | null {
     return SECTIONS.find((s) => s.key === key) ?? null;
   }
 
   // -----------------------------------------------------------------------
-  // SiteAdapter contract
+  // Contrato SiteAdapter
   // -----------------------------------------------------------------------
 
   /**
-   * Parse a PrimeFaces DataTable `<tr>` element into a ScrapedRecord.
+   * Parsea un elemento `<tr>` del DataTable PrimeFaces a ScrapedRecord.
    *
-   * Maps `<td>` elements to fields using the current section's column
-   * mapping. Also scans the action column for a mojarra.jsfcljs onclick
-   * handler and extracts the `param_uuid` as `_uuid`.
+   * Mapea elementos `<td>` a campos usando el mapeo de columnas de la
+   * sección actual. También escanea la columna de acción en busca de un
+   * manejador onclick mojarra.jsfcljs y extrae el `param_uuid` como `_uuid`.
    *
-   * @param $tr - Cheerio-wrapped table row
-   * @returns ScrapedRecord with field values, or null if the row is empty
+   * @param $tr - Fila de tabla envuelta en Cheerio
+   * @returns ScrapedRecord con valores de campo, o null si la fila está vacía
    */
   parseRow($tr: Cheerio<unknown>): ScrapedRecord | null {
-    // Cast to AnyNode so cheerio's .find(), .eq(), .last() etc. work
     const $row = $tr as Cheerio<AnyNode>;
     const $tds = $row.find('td');
     if ($tds.length === 0) return null;
@@ -202,7 +202,6 @@ export class OefaAdapter implements SiteAdapter {
       _uuid: null,
     };
 
-    // Map columns to fields by index
     for (let idx = 0; idx < fields.length; idx++) {
       const $td = $tds.eq(idx);
       const fieldName = fields[idx];
@@ -211,9 +210,8 @@ export class OefaAdapter implements SiteAdapter {
       record[fieldName] = text || null;
     }
 
-    // Extract UUID from the action column's download link
-    // The last <td> typically contains <a onclick="mojarra.jsfcljs(...)">
-    // or a <button>. Look for both.
+    // Extraer UUID del enlace de descarga en la columna de acción
+    // La última <td> contiene <a onclick="mojarra.jsfcljs(...)">
     const actionTd = $tds.last();
     if (actionTd) {
       const $action = actionTd as Cheerio<AnyNode>;
@@ -232,10 +230,10 @@ export class OefaAdapter implements SiteAdapter {
   }
 
   /**
-   * Build a DownloadJob from a scraped record's UUID.
+   * Construye un DownloadJob desde el UUID de un registro extraído.
    *
-   * @param record - Previously scraped record (must have _uuid and _section)
-   * @returns DownloadJob if a UUID is present, null otherwise
+   * @param record - Registro previamente extraído (debe tener _uuid y _section)
+   * @returns DownloadJob si hay UUID presente, null si no
    */
   extractDownloadParams(record: ScrapedRecord): DownloadJob | null {
     const uuid = record._uuid;
@@ -249,7 +247,6 @@ export class OefaAdapter implements SiteAdapter {
       url: `${this.baseUrl}${section.path}`,
       formParams: {
         param_uuid: uuid,
-        // The JSF form ID is needed for the POST
         _formId: section.formId,
       },
       retryCount: 0,

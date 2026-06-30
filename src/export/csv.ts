@@ -1,14 +1,14 @@
 /**
- * @file CSV data export with UTF-8 BOM and RFC 4180 quoting.
+ * @file Exportación CSV con BOM UTF-8 y quoting RFC 4180.
  *
- * Writes scraped records to CSV files with Excel-compatible encoding
- * (UTF-8 BOM). Supports append mode (skips header row on append) and
- * optional field filtering.
+ * Escribe registros extraídos a archivos CSV con codificación compatible
+ * con Excel (BOM UTF-8). Soporta modo append (omite la cabecera al añadir)
+ * y filtrado opcional de campos.
  *
- * Quoting rules (RFC 4180):
- * - Fields containing commas, double quotes, or line breaks are quoted
- * - Double quotes inside quoted fields are escaped by doubling ("")
- * - The delimiter is comma
+ * Reglas de quoting (RFC 4180):
+ * - Los campos con comas, comillas dobles o saltos de línea se entrecomillan
+ * - Las comillas dobles dentro de campos entrecomillados se escapan duplicando ("")
+ * - El delimitador es la coma
  */
 
 import { createWriteStream } from 'node:fs';
@@ -17,37 +17,36 @@ import { once } from 'node:events';
 import type { ScrapedRecord } from '../types.js';
 
 /**
- * UTF-8 BOM character — prepended as the first 3 bytes for Excel
- * compatibility. Ensures Excel correctly interprets UTF-8 encoding
- * when opening the CSV file directly.
+ * Carácter BOM UTF-8 — se antepone como los primeros 3 bytes para
+ * compatibilidad con Excel. Asegura que Excel interprete correctamente
+ * la codificación UTF-8 al abrir el archivo CSV directamente.
  */
 const UTF8_BOM = '\uFEFF';
 
 /**
- * Options for the CSV writer.
+ * Opciones del escritor CSV.
  */
 export interface CsvOptions {
-  /** Optional subset of fields to include (default: all fields) */
+  /** Subconjunto opcional de campos a incluir */
   fieldFilter?: string[];
-  /** Append to existing file instead of overwriting (default: false) */
+  /** Append en lugar de sobrescribir (por defecto: false) */
   append?: boolean;
 }
 
 /**
- * Escape and optionally quote a single CSV field value per RFC 4180.
+ * Escapa y opcionalmente entrecomilla un valor de campo CSV según RFC 4180.
  *
- * A field is quoted if it contains a comma, double quote, or line break.
- * Double quotes within the field are escaped by doubling.
+ * Un campo se entrecomilla si contiene coma, comilla doble o salto de línea.
+ * Las comillas dobles dentro del campo se escapan duplicando.
  *
- * @param value - Raw field value (null becomes empty string)
- * @returns RFC 4180-compliant field representation
+ * @param value - Valor crudo del campo (null se convierte en cadena vacía)
+ * @returns Representación del campo compatible con RFC 4180
  */
 function escapeCsvField(value: string | null): string {
   if (value === null || value === undefined) return '';
 
   const str = String(value);
 
-  // Check if quoting is required
   if (
     str.includes(',') ||
     str.includes('"') ||
@@ -61,11 +60,11 @@ function escapeCsvField(value: string | null): string {
 }
 
 /**
- * Determine the ordered list of field names for export.
+ * Determina la lista ordenada de campos a exportar.
  *
- * @param records - Record array (uses first for field discovery)
- * @param filter  - Optional field whitelist
- * @returns Ordered field name array
+ * @param records - Array de registros (usa el primero para descubrir campos)
+ * @param filter  - Lista blanca opcional de campos
+ * @returns Array ordenado de nombres de campo
  */
 function resolveFields(
   records: ScrapedRecord[],
@@ -77,11 +76,11 @@ function resolveFields(
 }
 
 /**
- * Write a single CSV row from record data.
+ * Escribe una fila CSV a partir de un registro.
  *
- * @param record - The record to serialize
- * @param fields - Ordered field names
- * @returns CSV row string (no trailing newline)
+ * @param record - Registro a serializar
+ * @param fields - Nombres de campo ordenados
+ * @returns Cadena de fila CSV (sin salto de línea final)
  */
 function formatCsvRow(
   record: ScrapedRecord,
@@ -93,17 +92,17 @@ function formatCsvRow(
 }
 
 /**
- * Write records to a CSV file with UTF-8 BOM and RFC 4180 quoting.
+ * Escribe registros en un archivo CSV con BOM UTF-8 y quoting RFC 4180.
  *
- * Produces Excel-compatible output:
- * - First 3 bytes: UTF-8 BOM (\uFEFF)
- * - First row: column headers
- * - Subsequent rows: record data
- * - Empty record set: BOM + header only, zero data rows
+ * Produce salida compatible con Excel:
+ * - Primeros 3 bytes: BOM UTF-8 (\uFEFF)
+ * - Primera fila: cabeceras de columna
+ * - Filas siguientes: datos de los registros
+ * - Conjunto vacío: solo BOM + cabecera, sin filas de datos
  *
- * @param records  - Records to write
- * @param filePath - Output file path
- * @param options  - Formatting options
+ * @param records  - Registros a escribir
+ * @param filePath - Ruta del archivo de salida
+ * @param options  - Opciones de formato
  */
 export async function writeCsv(
   records: ScrapedRecord[],
@@ -117,12 +116,10 @@ export async function writeCsv(
 
   try {
     if (!options.append) {
-      // Write UTF-8 BOM + header row for new files
       stream.write(UTF8_BOM);
       stream.write(fields.join(',') + '\n');
     }
 
-    // Write data rows
     for (const record of records) {
       stream.write(formatCsvRow(record, fields) + '\n');
     }

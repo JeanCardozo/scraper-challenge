@@ -1,15 +1,15 @@
 /**
- * @file Typed record interfaces for OEFA's three public consultation sections.
+ * @file Interfaces de registro tipado para las tres secciones de consulta
+ * pública de OEFA.
  *
- * All fields are nullable strings to handle missing or empty table cells
- * gracefully. The interfaces define the canonical field set for each
- * section's DataTable columns.
+ * Todos los campos son strings nullable para manejar celdas vacías
+ * o ausentes. Definen el conjunto canónico de campos de cada sección.
  */
 
 /**
- * Record from the TFA (Tribunal de Fiscalización Ambiental) section.
+ * Registro de la sección TFA (Tribunal de Fiscalización Ambiental).
  *
- * Maps to the `consultaTfa.xhtml` DataTable which has 6 columns:
+ * Mapea al DataTable de `consultaTfa.xhtml` con 6 columnas:
  * Nro, Número de expediente, Administrado, Unidad fiscalizable,
  * Sector, Nro. Resolución de Apelación.
  */
@@ -23,10 +23,10 @@ export interface TfaRecord {
 }
 
 /**
- * Record from the DFSAI (Dirección de Fiscalización Sanción y
- * Asuntos de Impacto) section.
+ * Registro de la sección DFSAI (Dirección de Fiscalización Sanción y
+ * Asuntos de Impacto).
  *
- * Maps to the `consultaDfsai.xhtml` DataTable which has 6 columns:
+ * Mapea al DataTable de `consultaDfsai.xhtml` con 6 columnas:
  * Nro, Número de expediente, Administrado, Unidad fiscalizable,
  * Sector, Nro. Resolución de Sanción.
  */
@@ -40,9 +40,9 @@ export interface DfsaiRecord {
 }
 
 /**
- * Record from the IGA (Instrumentos de Gestión Ambiental) section.
+ * Registro de la sección IGA (Instrumentos de Gestión Ambiental).
  *
- * Maps to the `consultaIga.xhtml` DataTable which has 5 columns:
+ * Mapea al DataTable de `consultaIga.xhtml` con 5 columnas:
  * Nro, Administrado, Unidad fiscalizable, Sector, Tipo de instrumento.
  */
 export interface IgaRecord {
